@@ -97,8 +97,9 @@ function moveSquares( activeSquareArray, isVertical, isAdditive ) {
         const {xCoord, yCoord} = activeSquare;
         let coord = (isVertical) ? yCoord : xCoord;
 
-        let i = 0;
-        while( i++ < 1000 ) {
+        // let i = 0;
+        // removed super hacky i++ < 1000
+        while( true ) {
           if( coord >= 1 && coord <= 4 ) {
             coord = (isAdditive) ? coord+1 : coord-1;
           } else {
