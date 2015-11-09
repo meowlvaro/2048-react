@@ -1,0 +1,62 @@
+// Import all partials
+// @require './_*.styl'
+
+html
+  background        #DBFFF5
+  font-family       sans-serif
+
+.board
+  border        25px solid #49F5C7
+  display       inline-block
+  background    #BCFFE9
+  position      absolute
+  top           100px
+  left          50%
+  margin-left   -320px
+
+  .square
+    background    #BCFFE9
+    width         125px
+    height        125px
+    border        5px solid #49F5C7
+    float         left
+    .value
+      text-align        center
+      font-size         50px
+      padding           0
+      margin            0
+      vertical-align    middle
+      margin-top        35px
+      color             #FFF0F0
+  .square.active
+    position      absolute
+    z-index       1
+    float         none
+    background    #64BDD8
+    transition    all 250ms;
+  .square.x-1
+    left        0px
+  .square.x-2
+    left        134px
+  .square.x-3
+    left        268px
+  .square.x-4
+    left        402px
+
+  .square.y-1
+    top         0px
+  .square.y-2
+    top         134px
+  .square.y-3
+    top         268px
+  .square.y-4
+    top         402px
+
+
+  .gameOver
+    position      absolute
+    z-index       2
+    top           0
+    left          0
+    right         0
+    bottom        0

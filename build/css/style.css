@@ -1,0 +1,69 @@
+html {
+  background: #dbfff5;
+  font-family: sans-serif;
+}
+.board {
+  border: 25px solid #49f5c7;
+  display: inline-block;
+  background: #bcffe9;
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  margin-left: -320px;
+}
+.board .square {
+  background: #bcffe9;
+  width: 125px;
+  height: 125px;
+  border: 5px solid #49f5c7;
+  float: left;
+}
+.board .square .value {
+  text-align: center;
+  font-size: 50px;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  margin-top: 35px;
+  color: #fff0f0;
+}
+.board .square.active {
+  position: absolute;
+  z-index: 1;
+  float: none;
+  background: #64bdd8;
+  -webkit-transition: all 250ms;
+  transition: all 250ms;
+}
+.board .square.x-1 {
+  left: 0px;
+}
+.board .square.x-2 {
+  left: 134px;
+}
+.board .square.x-3 {
+  left: 268px;
+}
+.board .square.x-4 {
+  left: 402px;
+}
+.board .square.y-1 {
+  top: 0px;
+}
+.board .square.y-2 {
+  top: 134px;
+}
+.board .square.y-3 {
+  top: 268px;
+}
+.board .square.y-4 {
+  top: 402px;
+}
+.board .gameOver {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
