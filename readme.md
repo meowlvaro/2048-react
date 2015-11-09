@@ -1,13 +1,7 @@
-# Catch of the Day!
+# 2048
 
-![](http://wes.io/cFqp/content)
+Built a 2048 App to test out React. Fun simple project.
 
-## To install:
-
-`npm install` 
-
-## To run:
-
-`gulp`
-
-## The Guts
+TODO:
+  + fix loop bug when merge of squares occurs (squares merge, but all movement stops)
+  + smooth out animations
