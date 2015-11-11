@@ -46,13 +46,12 @@ AppDispatcher.register(function(action) {
       ActiveSquareStore.emitChange();
       break;
     case 'move':
-      move( action.direction );
+      create( true );
       ActiveSquareStore.emitChange();
 
       setTimeout(()=>{
-        create( true );
-        ActiveSquareStore.emitChange();
-      }, 200)
+        move( action.direction );
+      }, 50)
       break;
   }
 });
@@ -88,42 +87,53 @@ function buildActiveSquareArray( isVertical ) {
 }
 
 function moveSquares( activeSquareArray, isVertical, isAdditive ) {
-  activeSquareArray.forEach( layer => {
-    layer.forEach( activeSquare => {
+  var unmoveableSquares = {};
+  while( Object.keys(unmoveableSquares).length < Object.keys(activeSquares).length ) {
+    // activeSquareArray = activeSquareArray.reverse();
+    activeSquareArray.forEach( layer => {
+      layer = layer.reverse();
+      layer.forEach( activeSquare => {
 
-      // arrays don't have uids :
-      if( activeSquare.uid ) {
-        // console.log( 'prev', activeSquare );
-        const {xCoord, yCoord} = activeSquare;
-        let coord = (isVertical) ? yCoord : xCoord;
+        // arrays don't have uids :
+        if( activeSquare.uid ) {
+          // console.log( 'prev', activeSquare );
+          const {xCoord, yCoord} = activeSquare;
+          let coord = (isVertical) ? yCoord : xCoord;
 
-        // let i = 0;
-        // removed super hacky i++ < 1000
-        while( true ) {
-          if( coord >= 1 && coord <= 4 ) {
-            coord = (isAdditive) ? coord+1 : coord-1;
+          // let i = 0;
+          // removed super hacky i++ < 1000
+
+          while( true ) {
+            if( coord >= 1 && coord <= 4 ) {
+              coord = (isAdditive) ? coord+1 : coord-1;
+            } else {
+              coord = (isAdditive) ? coord-1 : coord+1;
+              if( !unmoveableSquares[ activeSquare.uid ] ) {
+                unmoveableSquares[ activeSquare.uid ] = true;
+              }
+              break;
+            }
+
+            if( !areCoordinatesValid( (!isVertical ? coord : xCoord), (isVertical ? coord : yCoord), true, activeSquare.uid) ) {
+              coord = (isAdditive) ? coord-1 : coord+1;
+              if( !unmoveableSquares[ activeSquare.uid ] ) {
+                unmoveableSquares[ activeSquare.uid ] = true;
+              }
+              break;
+            }
+          }
+
+          if( isVertical ) {
+            activeSquare.yCoord = coord;
           } else {
-            coord = (isAdditive) ? coord-1 : coord+1;
-            break;
+            activeSquare.xCoord = coord;
           }
-
-          if( !areCoordinatesValid( (!isVertical ? coord : xCoord), (isVertical ? coord : yCoord), true, activeSquare.uid) ) {
-
-            coord = (isAdditive) ? coord-1 : coord+1;
-            break;
-          }
+          ActiveSquareStore.emitChange();
         }
+      });
+    });
 
-        if( isVertical ) {
-          activeSquare.yCoord = coord;
-        } else {
-          activeSquare.xCoord = coord;
-        }
-
-        // console.log( 'new', activeSquare );
-      }
-    })
-  })
+  }
 }
 
 
@@ -163,20 +173,30 @@ function create( allowLarge ) {
   return newSquare;
 }
 
-function areCoordinatesValid( xCoord, yCoord, mergeIfCollided, mergeUID ) {
+function areCoordinatesValid( xCoord=false, yCoord=false, mergeIfCollided, mergeUID ) {
 
   return !Object.keys(activeSquares).filter( uid => {
     let activeSquare = activeSquares[uid];
-    let collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord;
-    if( mergeUID ) {
-      collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord && uid !== mergeUID;
+    if( !activeSquare ) {
+      return false;
     }
 
+    let collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord;
+    // if( mergeUID ) {
+    //   collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord && uid !== mergeUID;
+    // }
+
     if( collision && mergeIfCollided && uid !== mergeUID ) {
+      if( !activeSquares[mergeUID] ) {
+        return false;
+      }
+
       if( activeSquares[mergeUID].value === activeSquare.value ) {
-        activeSquares[uid].value += activeSquare.value;
-        delete activeSquares[ mergeUID ];
-        ActiveSquareStore.emitChange();
+        setTimeout(()=>{
+          activeSquare.value += activeSquare.value;
+          delete activeSquares[ mergeUID ];
+          ActiveSquareStore.emitChange();
+        }, 250);
         collision = false;
       }
     }
