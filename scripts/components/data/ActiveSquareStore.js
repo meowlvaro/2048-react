@@ -38,6 +38,9 @@ var ActiveSquareStore = assign({}, EventEmitter.prototype, {
 });
 
 
+// lots of listeners
+ActiveSquareStore.setMaxListeners(24);
+
 
 AppDispatcher.register(function(action) {
   switch(action.actionType) {
