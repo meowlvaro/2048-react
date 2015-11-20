@@ -116,12 +116,12 @@ export default React.createClass({
   },
 
   componentWillUpdate(nextProps, nextState) {
-    // debugger;
     // localStorage.setItem('order-' + this.props.params.storeId, JSON.stringify(nextState.order));
   },
 
   // change listenenr
   _onChange() {
+    // console.log(1);
     this.setState({
       activeSquares: ActiveSquareStore.getAllSquares(),
       isGameOver: ActiveSquareStore.isGameOver()

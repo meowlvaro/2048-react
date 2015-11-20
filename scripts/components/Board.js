@@ -29,6 +29,7 @@ export default React.createClass({
 
   // change listenenr
   _onChange() {
+    // console.log(3);
     this.setState({
       isGameOver: ActiveSquareStore.isGameOver()
     });

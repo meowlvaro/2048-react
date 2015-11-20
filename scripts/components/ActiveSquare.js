@@ -15,9 +15,9 @@ export default React.createClass({
 
   render() {
 
-    const { xCoord, yCoord, value } = this.state;
+    const { xCoord, yCoord, value, uid } = this.state;
 
-    let position = 'active square x-' + xCoord + ' y-' + yCoord;
+    let position = 'active '+uid+' square x-' + xCoord + ' y-' + yCoord;
     return (
       <ReactCSSTransitionGroup transitionName="activeSquare" transitionEnterTimeout={500} transitionLeaveTimeout={500} className={position}>
         <p ref={value} className="value">{value}</p>
@@ -34,6 +34,7 @@ export default React.createClass({
   },
 
   _onChange() {
+    // console.log(2);
     let uid = this.props.uid;
     let activeSquare = ActiveSquareStore.getSquare( uid );
     if( activeSquare ) {
