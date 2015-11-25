@@ -33,7 +33,9 @@ var ActiveSquareStore = assign({}, EventEmitter.prototype, {
 
     removeChangeListener: function(callback) {
       this.removeListener(CHANGE_EVENT, callback);
-    }
+    },
+
+    canChange: true
 
 });
 
@@ -44,35 +46,44 @@ ActiveSquareStore.setMaxListeners(24);
 
 AppDispatcher.register(function(action) {
 
-  if( ActiveSquareStore.isGameOver() ) {
+  if( ActiveSquareStore.isGameOver() || !ActiveSquareStore.canChange ) {
     return;
   }
+
+  ActiveSquareStore.canChange = false;
 
   switch(action.actionType) {
     case 'create':
       create( action.allowLarge );
       ActiveSquareStore.emitChange();
+      setTimeout(function(){
+        ActiveSquareStore.canChange = true;
+      }, 250);
       break;
     case 'move':
-      create( true );
-      ActiveSquareStore.emitChange();
       move( action.direction );
+
+      // after moving create
       break;
   }
+
 });
 
 function move( direction ) {
   // create 2 dimensional array
   let isVertical = (direction === 'up' || direction === 'down');
-  let activeSquareArray = buildActiveSquareArray( isVertical );
+  // let activeSquareArray = buildActiveSquareArray( isVertical );
 
   // is the movement additive, or subtractive i.e. will it add to the x || y Coord?
   let isAdditive = (direction === 'down' || direction === 'right');
-  moveSquares( activeSquareArray, isVertical, isAdditive );
+  moveSquares( isVertical, isAdditive );
 }
 
 function buildActiveSquareArray( isVertical ) {
-  var output = [ [ [], [], [], [], ], [ [], [], [], [], ], [ [], [], [], [], ] , [ [], [], [], [],  ] ];
+  var output = [ [ false, false, false, false, ],
+                 [ false, false, false, false, ],
+                 [ false, false, false, false, ] ,
+                 [ false, false, false, false, ] ];
 
   Object.keys(activeSquares).forEach( uid => {
     let activeSquare = activeSquares[uid],
@@ -91,99 +102,95 @@ function buildActiveSquareArray( isVertical ) {
   return output;
 }
 
-function moveSquares( activeSquareArray, isVertical, isAdditive ) {
-  var unmoveableSquares = {};
-  var emergencyBreak = 0;
+function moveSquares( isVertical, isAdditive ) {
 
+  Object.keys(activeSquares).forEach( uid => {
 
-  // track on visible squares
-  let badSquareHash = {};
-  while( Object.keys(unmoveableSquares).length < Object.keys(activeSquares).length ) {
+    let activeSquare = activeSquares[uid];
 
-    // something weird with merge timing...
-    // it causes there to be more active squares, one of which isn't moveable
-    if( emergencyBreak++ === 16 ) {
-      let culprit = Object.keys(activeSquares).filter( uid => {
-        return !unmoveableSquares[uid];
-      });
-
-      console.log(culprit);
-      break;
+    if( activeSquare.isNew ) {
+      return;
     }
-    // activeSquareArray = activeSquareArray.reverse();
-    activeSquareArray.forEach( layer => {
-      layer = layer.reverse();
-      layer.forEach( activeSquare => {
 
-        // arrays don't have uids :
-        if( activeSquare.uid ) {
-          // console.log( 'prev', activeSquare );
-          const {xCoord, yCoord} = activeSquare;
-          let coord = (isVertical) ? yCoord : xCoord;
+    // step 1. move the square as far as possible within bounds
+    // step 2. move the square as far as possible before hitting another square
+    moveSquare( activeSquare, isVertical, isAdditive );
+    ActiveSquareStore.emitChange();
+  });
 
-          // let i = 0;
-          // removed super hacky i++ < 1000
+  setTimeout(function(){
+    create( true );
+    ActiveSquareStore.emitChange();
+    ActiveSquareStore.canChange = true;
+  }, 250);
 
-          while( true ) {
-            if( coord >= 1 && coord <= 4 ) {
-              coord = (isAdditive) ? coord+1 : coord-1;
-            } else {
-              coord = (isAdditive) ? coord-1 : coord+1;
-              if( !unmoveableSquares[ activeSquare.uid ] ) {
-                unmoveableSquares[ activeSquare.uid ] = true;
-              }
-              break;
-            }
-
-            if( !areCoordinatesValid( (!isVertical ? coord : xCoord), (isVertical ? coord : yCoord) ) ) {
-
-              // get id of element in bad position
-              let badSquareUID = Object.keys(activeSquares).filter(uid => {
-                let badSquare = activeSquares[uid];
-                return badSquare.uid !== activeSquare.uid &&
-                       badSquare.xCoord === (!isVertical ? coord : xCoord) &&
-                       badSquare.yCoord === (!isVertical ? coord : xCoord);
-              })[0];
-
-              let badSquare = false;
-              if( badSquareUID ) {
-                badSquareUID = activeSquares[badSquareUID];
-              }
-
-              // merge
-              console.log(badSquare);
-              if( badSquare && badSquare.value === activeSquare.value ) {
-                activeSquare.value += badSquare.value;
-                console.log( 'removing ' + badSquare.uid );
-                delete activeSquares[ badSquare.uid ];
-              } else {
-                coord = (isAdditive) ? coord-1 : coord+1;
-              }
-
-              if( !unmoveableSquares[ activeSquare.uid ] ) {
-                unmoveableSquares[ activeSquare.uid ] = true;
-              }
-
-              break;
-            }
-          }
-
-          if( isVertical ) {
-            activeSquare.yCoord = coord;
-          } else {
-            activeSquare.xCoord = coord;
-          }
-          ActiveSquareStore.emitChange();
-        }
-      });
-    });
-
-  }
 }
 
+function moveSquare( activeSquare, isVertical, isAdditive ) {
 
+  do {
+
+    let newCoord = false;
+    if( isVertical ) {
+      newCoord = (isAdditive ? activeSquare.yCoord+1 : activeSquare.yCoord-1);
+    } else {
+      newCoord = (isAdditive ? activeSquare.xCoord+1 : activeSquare.xCoord-1);
+    }
+
+    if( !newCoord || newCoord > 4 || newCoord < 1 ) {
+      break;
+    }
+
+    // merge case
+    const xCoord = (!isVertical ? newCoord : activeSquare.xCoord),
+          yCoord = (isVertical ? newCoord : activeSquare.yCoord);
+    if( !areCoordinatesValid( xCoord, yCoord ) ) {
+
+      let badSquares = Object.keys(activeSquares).filter( uid => {
+        let badSquare = activeSquares[uid];
+        return badSquare.uid !== activeSquare.uid &&
+               badSquare.xCoord === xCoord &&
+               badSquare.yCoord === yCoord;
+      });
+
+      if( badSquares.length ) {
+        let badSquare = activeSquares[badSquares[0]];
+
+        if( badSquare.value === activeSquare.value ) {
+          badSquare.value += activeSquare.value;
+          delete activeSquares[activeSquare.uid];
+        }
+
+        break;
+      }
+
+    }
+
+    activeSquare.xCoord = xCoord;
+    activeSquare.yCoord = yCoord;
+
+  } while( isSquareWithinBounds(activeSquare, isVertical) )
+  // if( activeSquare.xCoord > 4 ) {
+  //   activeSquare.xCoord--;
+  // }
+  // if( activeSquare.yCoord > 4 ) {
+  //   activeSquare.yCoord--;
+  // }
+  // if( activeSquare.xCoord < 1 ) {
+  //   activeSquare.xCoord++;
+  // }
+  // if( activeSquare.yCoord < 1 ) {
+  //   activeSquare.yCoord++;
+  // }
+}
+
+function isSquareWithinBounds( activeSquare, isVertical ) {
+  return (isVertical) ? (activeSquare.yCoord > 1 && activeSquare.yCoord < 4) :
+                        (activeSquare.xCoord > 1 && activeSquare.xCoord < 4);
+}
 
 function create( allowLarge ) {
+
   let uid = generateUID(),
       value = generateRandomValue( allowLarge );
       // xCoord = generateRandomCoord(),
@@ -205,7 +212,7 @@ function create( allowLarge ) {
       let xCoord = activeSquare.xCoord + '',
           yCoord = activeSquare.yCoord + '';
 
-      takenSquareHash[ xCoord + yCoord ] = 0;
+      takenSquareHash[ xCoord + yCoord ] = true;
     }
 
   });
@@ -215,7 +222,7 @@ function create( allowLarge ) {
       let xC = x+'',
           yC = y+'';
 
-      if( !takenSquareHash[ x+y ] ) {
+      if( !takenSquareHash[ xC+yC ] ) {
         availableSquareArray.push({
           xCoord: x,
           yCoord: y
@@ -224,72 +231,31 @@ function create( allowLarge ) {
     }
   }
 
+  console.log('here');
+
   let randomIdx = Math.round(Math.random() * 1000) % availableSquareArray.length;
   const { xCoord, yCoord } = availableSquareArray[ randomIdx ];
-
-  // this is potentially faster... but less reliable...
-
-  // while( !areCoordinatesValid( xCoord, yCoord ) ) {
-  //   xCoord = generateRandomCoord();
-  //   yCoord = generateRandomCoord();
-  //
-  //   if( emergencyBreak-- == 0 ) {
-  //     console.log( 'bad math' );
-  //     break;
-  //   }
-  // }
 
   let newSquare = {
     uid,
     xCoord,
     yCoord,
-    value
+    value,
+    isNew: true
   };
 
-  console.log('newest ' + uid);
+  setTimeout(function(){
+    activeSquares[uid].isNew = false;
+  }, 250);
+
+  // console.log('newest ' + uid);
 
   activeSquares[ uid ] = newSquare;
   return newSquare;
 }
 
 function areCoordinatesValid( xCoord=false, yCoord=false ) {
-
-  // if( xCoord && yCoord ) {
-
   return !document.getElementsByClassName( 'x-'+xCoord+' y-'+yCoord ).length;
-  // }
-
-  // deprecated
-  /*
-  return !Object.keys(activeSquares).filter( uid => {
-    let activeSquare = activeSquares[uid];
-    if( !activeSquare ) {
-      return false;
-    }
-
-    let collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord;
-    // if( mergeUID ) {
-    //   collision = activeSquare.xCoord === xCoord && activeSquare.yCoord === yCoord && uid !== mergeUID;
-    // }
-
-    if( collision && mergeIfCollided && uid !== mergeUID ) {
-      if( !activeSquares[mergeUID] ) {
-        return false;
-      }
-
-      if( activeSquares[mergeUID].value === activeSquare.value ) {
-        // setTimeout(()=>{
-          activeSquare.value += activeSquare.value;
-          delete activeSquares[ mergeUID ];
-          // ActiveSquareStore.emitChange();
-        // }, 250);
-        collision = false;
-      }
-    }
-
-    return collision;
-  }).length;
-  */
 }
 
 function generateUID() {
