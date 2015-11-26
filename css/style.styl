@@ -5,6 +5,16 @@ html
   background        #DBFFF5
   font-family       sans-serif
 
+@keyframes pop
+  0%
+    opacity:0
+    transform:scale(.5)
+  50%
+    opacity:1
+  100%
+    opacity:1
+    transform:scale(1)
+
 .board
   border        25px solid #49F5C7
   display       inline-block
@@ -29,11 +39,15 @@ html
       margin-top        35px
       color             #FFF0F0
   .square.active
+    transform     scale(.5)
+    animation     pop .100s .2s 1 forwards
     position      absolute
     z-index       1
     float         none
     background    #64BDD8
-    transition    all 250ms;
+    transition    all 250ms
+    opacity       0
+
   .square.x-1
     left        0px
   .square.x-2
@@ -51,7 +65,6 @@ html
     top         268px
   .square.y-4
     top         402px
-
 
   .gameOver
     position      absolute

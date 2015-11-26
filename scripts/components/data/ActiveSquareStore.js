@@ -118,6 +118,7 @@ function moveSquares( isVertical, isAdditive ) {
     ActiveSquareStore.emitChange();
   });
 
+  // has to be 500 because 250ms is completion time for square movement
   setTimeout(function(){
     create( true );
     ActiveSquareStore.emitChange();
@@ -230,8 +231,6 @@ function create( allowLarge ) {
       }
     }
   }
-
-  console.log('here');
 
   let randomIdx = Math.round(Math.random() * 1000) % availableSquareArray.length;
   const { xCoord, yCoord } = availableSquareArray[ randomIdx ];

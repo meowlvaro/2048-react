@@ -28,12 +28,18 @@ html {
   color: #fff0f0;
 }
 .board .square.active {
+  -webkit-transform: scale(0.5);
+      -ms-transform: scale(0.5);
+          transform: scale(0.5);
+  -webkit-animation: pop 0.1s 0.2s 1 forwards;
+          animation: pop 0.1s 0.2s 1 forwards;
   position: absolute;
   z-index: 1;
   float: none;
   background: #64bdd8;
   -webkit-transition: all 250ms;
   transition: all 250ms;
+  opacity: 0;
 }
 .board .square.x-1 {
   left: 0px;
@@ -66,4 +72,34 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
+}
+@-webkit-keyframes pop {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0.5);
+            transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0.5);
+            transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
 }
