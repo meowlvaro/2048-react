@@ -3,4 +3,6 @@
 Built a 2048 App to test out React. Fun simple project.
 
 TODO:
-  + fix infinite loop bug
+  + Scale the numbers... 16 appears too often.
+  + Add in win condition.
+  + Add win announcement
